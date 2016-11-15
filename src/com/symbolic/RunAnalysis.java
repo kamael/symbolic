@@ -3,6 +3,9 @@ package com.symbolic;
 import soot.*;
 import soot.options.Options;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,7 +16,10 @@ import java.util.Map;
  */
 public class RunAnalysis {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws FileNotFoundException {
+
+        PrintStream ps=new PrintStream(new FileOutputStream("/tmp/aaa.txt"));
+        System.setOut(ps);
 
 
         Options.v().set_soot_classpath("/Users/haha/code/tmp/tutorial1/target/classes");
@@ -32,8 +38,8 @@ public class RunAnalysis {
                 "-w",
                 "-p", "cg", "enabled:false",
                 "-main-class",
-                "com.test.HessianPoC",//main-class
-                "com.test.HessianPoC"//argument classes
+                "com.test.SimpleTest",//main-class
+                "com.test.SimpleTest"//argument classes
         }));
 
 

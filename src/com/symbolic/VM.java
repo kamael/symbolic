@@ -7,10 +7,7 @@ import soot.toolkits.graph.ExceptionalUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 import soot.util.NumberedString;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
-
 /**
  * Created by mengyuan.ymy on 2016/11/11.
  */
@@ -22,6 +19,7 @@ public class VM {
 
     private static Set<String> loadedClass = new HashSet<String>();
 
+    private static final boolean DEBUG = true;
 
     static {
         ValueProperty v = new ValueProperty();
@@ -109,11 +107,12 @@ public class VM {
             return property;
         }
 
-
         // 对应synchronized语法的，忽略，不需要返回值
         if (MonitorStmt.class.isAssignableFrom(o.getClass())) {
             return null;
         }
+
+        ValueProperty v = null;
 
         Class<?> clazz = o.getClass();
         while (!clazz.getName().equals("java.lang.Object")) {
@@ -134,9 +133,42 @@ public class VM {
 
             mustEqual(prefix != null, true);
 
-            String methodName = "visit" + className.substring(prefix.length());
-
-
+            String subName = className.substring(prefix.length());
+            switch (subName) {
+                case "JCastExpr": v = visitJCastExpr((JCastExpr) o, locals, params); break;
+                case "JAssignStmt": v = visitJAssignStmt((JAssignStmt) o, locals, params); break;
+                case "JInvokeStmt": v = visitJInvokeStmt((JInvokeStmt) o, locals, params); break;
+                case "JIdentityStmt": v = visitJIdentityStmt((JIdentityStmt) o, locals, params); break;
+                case "JimpleLocal": v = visitJimpleLocal((JimpleLocal) o, locals, params); break;
+                case "JReturnStmt": v = visitJReturnStmt((JReturnStmt) o, locals, params); break;
+                case "JReturnVoidStmt": v = visitJReturnVoidStmt((JReturnVoidStmt) o, locals, params); break;
+                case "JGotoStmt": v = visitJGotoStmt((JGotoStmt) o, locals, params); break;
+                case "JThrowStmt": v = visitJThrowStmt((JThrowStmt) o, locals, params); break;
+                case "JArrayRef": v = visitJArrayRef((JArrayRef) o, locals, params); break;
+                case "JNewExpr": v = visitJNewExpr((JNewExpr) o, locals, params); break;
+                case "JIfStmt": v = visitJIfStmt((JIfStmt) o, locals, params); break;
+                case "JNegExpr": v = visitJNegExpr((JNegExpr) o, locals, params); break;
+                case "JLengthExpr": v = visitJLengthExpr((JLengthExpr) o, locals, params); break;
+                case "NullConstant": v = visitNullConstant((NullConstant) o, locals, params); break;
+                case "ClassConstant": v = visitClassConstant((ClassConstant) o, locals, params); break;
+                case "FloatConstant": v = visitFloatConstant((FloatConstant) o, locals, params); break;
+                case "LongConstant": v = visitLongConstant((LongConstant) o, locals, params); break;
+                case "DoubleConstant": v = visitDoubleConstant((DoubleConstant) o, locals, params); break;
+                case "IntConstant": v = visitIntConstant((IntConstant) o, locals, params); break;
+                case "StringConstant": v = visitStringConstant((StringConstant) o, locals, params); break;
+                case "JNewArrayExpr": v = visitJNewArrayExpr((JNewArrayExpr) o, locals, params); break;
+                case "StaticFieldRef": v = visitStaticFieldRef((StaticFieldRef) o, locals, params); break;
+                case "JInstanceFieldRef": v = visitJInstanceFieldRef((JInstanceFieldRef) o, locals, params); break;
+                case "JVirtualInvokeExpr":
+                case "JSpecialInvokeExpr":
+                case "AbstractInstanceInvokeExpr": v = visitAbstractInstanceInvokeExpr((AbstractInstanceInvokeExpr) o, locals, params); break;
+                case "JStaticInvokeExpr": v = visitJStaticInvokeExpr((JStaticInvokeExpr) o, locals, params); break;
+                case "ThisRef": v = visitThisRef((ThisRef) o, locals, params); break;
+                case "ParameterRef": v = visitParameterRef((ParameterRef) o, locals, params); break;
+                default:
+                    mustEqual(subName, "BUT NOT");
+            }
+            /*
             try {
                 Method method = this.getClass().getDeclaredMethod(methodName, clazz, Map.class, List.class);
                 return (ValueProperty)method.invoke(this, o, locals, params);
@@ -151,15 +183,13 @@ public class VM {
                 G.v().out.println("stoped UNKNOWN");
                 System.exit(-1);
             }
+            */
 
-            clazz = clazz.getSuperclass();
+            break;
+            //clazz = clazz.getSuperclass();
         }
 
-        G.v().out.print(this);
-        G.v().out.println(" can't invoke visit" + o.getClass().getName());
-        mustEqual("NEVER TOUCH", "BUT NOT");
-
-        return null;
+        return v;
     }
 
     private void loadClass(SootClass clazz) {
@@ -416,7 +446,7 @@ public class VM {
         return visitMethod(invokeMethod, null, prepareArgs(expr, locals, params));
     }
 
-    public Object visitJInvokeStmt(JInvokeStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
+    public ValueProperty visitJInvokeStmt(JInvokeStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
         return dispatch(stmt.getInvokeExpr(), locals, params);
     }
 
@@ -434,7 +464,7 @@ public class VM {
         return params.get(param.getIndex());
     }
 
-    public Object visitJIdentityStmt(JIdentityStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
+    public ValueProperty visitJIdentityStmt(JIdentityStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
         Value left = stmt.getLeftOp();
         Value right = stmt.getRightOp();
 
@@ -449,7 +479,7 @@ public class VM {
         return null;
     }
 
-    public void visitJAssignStmt(JAssignStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
+    public ValueProperty visitJAssignStmt(JAssignStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
         ValueProperty rvalue = null;
 
         rvalue = dispatch(stmt.getRightOp(), locals, params);
@@ -485,6 +515,8 @@ public class VM {
         } else {
             mustEqual("NEVER TOUCH", "BUT NOT");
         }
+
+        return null;
     }
 
     public ValueProperty visitMethod(SootMethod method, ValueProperty thisValue, List<ValueProperty> params) {
@@ -549,11 +581,12 @@ public class VM {
             locals.put(local, new ValueProperty());
         }
 
-
-        System.out.println(staticFields.get("pp").value + method.getDeclaringClass().getName());
-        System.out.println(staticFields.get("pp").value + method.getName());
-        //System.out.println(body.toString());
-        System.out.flush();
+        if (DEBUG) {
+            System.out.println(staticFields.get("pp").value + method.getDeclaringClass().getName());
+            System.out.println(staticFields.get("pp").value + method.getName());
+            //System.out.println(body.toString());
+            System.out.flush();
+        }
 
 
 
@@ -562,12 +595,15 @@ public class VM {
         while (gIt.hasNext()) {
             Unit u = (Unit) gIt.next();
 
-            System.out.println(staticFields.get("pp").value + "  " + u.toString());
-            staticFields.get("pp").value = "|  " + (String)staticFields.get("pp").value;
-
-            ValueProperty o = dispatch(u, locals, params);
-
-            staticFields.get("pp").value = ((String)staticFields.get("pp").value).substring(3);
+            ValueProperty o = null;
+            if (DEBUG) {
+                System.out.println(staticFields.get("pp").value + "  " + u.toString());
+                staticFields.get("pp").value = "|  " + (String) staticFields.get("pp").value;
+                o = dispatch(u, locals, params);
+                staticFields.get("pp").value = ((String)staticFields.get("pp").value).substring(3);
+            } else {
+                o = dispatch(u, locals, params);
+            }
 
             // TODO: Return 语句的处理，这里取最后的return，但是不一定能用
             if (u instanceof JReturnStmt) {
