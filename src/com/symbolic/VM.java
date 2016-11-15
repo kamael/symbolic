@@ -270,8 +270,18 @@ public class VM {
         return null;
     }
 
+    public ValueProperty visitJIfStmt(JIfStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
+        dispatch(stmt.getCondition(), locals, params);
+
+        // TODO: 做分支判断，这里先直接忽略if语句
+        return null;
+    }
+
     public ValueProperty visitJArrayRef(JArrayRef stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
-        return new ValueProperty();
+        ValueProperty value = dispatch(stmt.getBase(), locals, params);
+        ValueProperty index = dispatch(stmt.getIndex(), locals, params);
+
+        return value.fields.get(String.valueOf((int) index.value));
     }
 
     public ValueProperty visitJNewExpr(JNewExpr expr, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
@@ -279,13 +289,6 @@ public class VM {
         property.trueType = expr.getType();
 
         return property;
-    }
-
-    public ValueProperty visitJIfStmt(JIfStmt stmt, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
-        dispatch(stmt.getCondition(), locals, params);
-
-        // TODO: 做分支判断，这里先直接忽略if语句
-        return null;
     }
 
     public ValueProperty visitJNegExpr(JNegExpr expr, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {

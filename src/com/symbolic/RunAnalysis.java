@@ -49,7 +49,7 @@ public class RunAnalysis {
 
             @Override
             protected void internalTransform(String phaseName, Map options) {
-                //CHATransformer.v().transform();
+                // CHATransformer.v().transform();
 
                 VM vm = new VM();
                 SootMethod method = Scene.v().getMainClass().getMethodByName("main");
