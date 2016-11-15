@@ -8,6 +8,7 @@ import soot.toolkits.graph.UnitGraph;
 import soot.util.NumberedString;
 
 import java.util.*;
+
 /**
  * Created by mengyuan.ymy on 2016/11/11.
  */
@@ -58,7 +59,7 @@ public class VM {
     }
 
     private void mustAssignableFrom(String father, String child) {
-        try{
+        try {
             mustAssignableFrom(Class.forName(father), Class.forName(child));
         } catch (Exception e) {
             e.printStackTrace();
@@ -98,7 +99,7 @@ public class VM {
 
         // 算术语句，直接返回
         if (AbstractBinopExpr.class.isAssignableFrom(o.getClass())) {
-            Value value = ((AbstractBinopExpr)o).getOp1();
+            Value value = ((AbstractBinopExpr) o).getOp1();
 
             ValueProperty property = new ValueProperty();
             property.trueType = value.getType();
@@ -114,80 +115,115 @@ public class VM {
 
         ValueProperty v = null;
 
-        Class<?> clazz = o.getClass();
-        while (!clazz.getName().equals("java.lang.Object")) {
-            String className = clazz.getName();
-            String prefix = null;
-            String[] prepare = new String[]{
-                    "soot.jimple.internal.",
-                    "soot.jimple.",
-                    "soot."
-            };
+        String className = o.getClass().getName();
+        String prefix = null;
+        String[] prepare = new String[]{
+                "soot.jimple.internal.",
+                "soot.jimple.",
+                "soot."
+        };
 
-            for (String s : prepare) {
-                if (className.startsWith(s)) {
-                    prefix = s;
-                    break;
-                }
+        for (String s : prepare) {
+            if (className.startsWith(s)) {
+                prefix = s;
+                break;
             }
-
-            mustEqual(prefix != null, true);
-
-            String subName = className.substring(prefix.length());
-            switch (subName) {
-                case "JCastExpr": v = visitJCastExpr((JCastExpr) o, locals, params); break;
-                case "JAssignStmt": v = visitJAssignStmt((JAssignStmt) o, locals, params); break;
-                case "JInvokeStmt": v = visitJInvokeStmt((JInvokeStmt) o, locals, params); break;
-                case "JIdentityStmt": v = visitJIdentityStmt((JIdentityStmt) o, locals, params); break;
-                case "JimpleLocal": v = visitJimpleLocal((JimpleLocal) o, locals, params); break;
-                case "JReturnStmt": v = visitJReturnStmt((JReturnStmt) o, locals, params); break;
-                case "JReturnVoidStmt": v = visitJReturnVoidStmt((JReturnVoidStmt) o, locals, params); break;
-                case "JGotoStmt": v = visitJGotoStmt((JGotoStmt) o, locals, params); break;
-                case "JThrowStmt": v = visitJThrowStmt((JThrowStmt) o, locals, params); break;
-                case "JArrayRef": v = visitJArrayRef((JArrayRef) o, locals, params); break;
-                case "JNewExpr": v = visitJNewExpr((JNewExpr) o, locals, params); break;
-                case "JIfStmt": v = visitJIfStmt((JIfStmt) o, locals, params); break;
-                case "JNegExpr": v = visitJNegExpr((JNegExpr) o, locals, params); break;
-                case "JLengthExpr": v = visitJLengthExpr((JLengthExpr) o, locals, params); break;
-                case "NullConstant": v = visitNullConstant((NullConstant) o, locals, params); break;
-                case "ClassConstant": v = visitClassConstant((ClassConstant) o, locals, params); break;
-                case "FloatConstant": v = visitFloatConstant((FloatConstant) o, locals, params); break;
-                case "LongConstant": v = visitLongConstant((LongConstant) o, locals, params); break;
-                case "DoubleConstant": v = visitDoubleConstant((DoubleConstant) o, locals, params); break;
-                case "IntConstant": v = visitIntConstant((IntConstant) o, locals, params); break;
-                case "StringConstant": v = visitStringConstant((StringConstant) o, locals, params); break;
-                case "JNewArrayExpr": v = visitJNewArrayExpr((JNewArrayExpr) o, locals, params); break;
-                case "StaticFieldRef": v = visitStaticFieldRef((StaticFieldRef) o, locals, params); break;
-                case "JInstanceFieldRef": v = visitJInstanceFieldRef((JInstanceFieldRef) o, locals, params); break;
-                case "JVirtualInvokeExpr":
-                case "JSpecialInvokeExpr":
-                case "AbstractInstanceInvokeExpr": v = visitAbstractInstanceInvokeExpr((AbstractInstanceInvokeExpr) o, locals, params); break;
-                case "JStaticInvokeExpr": v = visitJStaticInvokeExpr((JStaticInvokeExpr) o, locals, params); break;
-                case "ThisRef": v = visitThisRef((ThisRef) o, locals, params); break;
-                case "ParameterRef": v = visitParameterRef((ParameterRef) o, locals, params); break;
-                default:
-                    mustEqual(subName, "BUT NOT");
-            }
-            /*
-            try {
-                Method method = this.getClass().getDeclaredMethod(methodName, clazz, Map.class, List.class);
-                return (ValueProperty)method.invoke(this, o, locals, params);
-            } catch (NoSuchMethodException e) {
-                // 这里不处理，看是否有父类处理了
-            } catch (InvocationTargetException e) {
-                e.getCause().printStackTrace();
-                G.v().out.println("stoped");
-                System.exit(-1);
-            } catch (Exception e) {
-                G.v().out.println(e.toString());
-                G.v().out.println("stoped UNKNOWN");
-                System.exit(-1);
-            }
-            */
-
-            break;
-            //clazz = clazz.getSuperclass();
         }
+
+        mustEqual(prefix != null, true);
+
+        String subName = className.substring(prefix.length());
+        switch (subName) {
+            case "JCastExpr":
+                v = visitJCastExpr((JCastExpr) o, locals, params);
+                break;
+            case "JAssignStmt":
+                v = visitJAssignStmt((JAssignStmt) o, locals, params);
+                break;
+            case "JInvokeStmt":
+                v = visitJInvokeStmt((JInvokeStmt) o, locals, params);
+                break;
+            case "JIdentityStmt":
+                v = visitJIdentityStmt((JIdentityStmt) o, locals, params);
+                break;
+            case "JimpleLocal":
+                v = visitJimpleLocal((JimpleLocal) o, locals, params);
+                break;
+            case "JReturnStmt":
+                v = visitJReturnStmt((JReturnStmt) o, locals, params);
+                break;
+            case "JReturnVoidStmt":
+                v = visitJReturnVoidStmt((JReturnVoidStmt) o, locals, params);
+                break;
+            case "JGotoStmt":
+                v = visitJGotoStmt((JGotoStmt) o, locals, params);
+                break;
+            case "JThrowStmt":
+                v = visitJThrowStmt((JThrowStmt) o, locals, params);
+                break;
+            case "JArrayRef":
+                v = visitJArrayRef((JArrayRef) o, locals, params);
+                break;
+            case "JNewExpr":
+                v = visitJNewExpr((JNewExpr) o, locals, params);
+                break;
+            case "JIfStmt":
+                v = visitJIfStmt((JIfStmt) o, locals, params);
+                break;
+            case "JNegExpr":
+                v = visitJNegExpr((JNegExpr) o, locals, params);
+                break;
+            case "JLengthExpr":
+                v = visitJLengthExpr((JLengthExpr) o, locals, params);
+                break;
+            case "NullConstant":
+                v = visitNullConstant((NullConstant) o, locals, params);
+                break;
+            case "ClassConstant":
+                v = visitClassConstant((ClassConstant) o, locals, params);
+                break;
+            case "FloatConstant":
+                v = visitFloatConstant((FloatConstant) o, locals, params);
+                break;
+            case "LongConstant":
+                v = visitLongConstant((LongConstant) o, locals, params);
+                break;
+            case "DoubleConstant":
+                v = visitDoubleConstant((DoubleConstant) o, locals, params);
+                break;
+            case "IntConstant":
+                v = visitIntConstant((IntConstant) o, locals, params);
+                break;
+            case "StringConstant":
+                v = visitStringConstant((StringConstant) o, locals, params);
+                break;
+            case "JNewArrayExpr":
+                v = visitJNewArrayExpr((JNewArrayExpr) o, locals, params);
+                break;
+            case "StaticFieldRef":
+                v = visitStaticFieldRef((StaticFieldRef) o, locals, params);
+                break;
+            case "JInstanceFieldRef":
+                v = visitJInstanceFieldRef((JInstanceFieldRef) o, locals, params);
+                break;
+            case "JVirtualInvokeExpr":
+            case "JSpecialInvokeExpr":
+            case "AbstractInstanceInvokeExpr":
+                v = visitAbstractInstanceInvokeExpr((AbstractInstanceInvokeExpr) o, locals, params);
+                break;
+            case "JStaticInvokeExpr":
+                v = visitJStaticInvokeExpr((JStaticInvokeExpr) o, locals, params);
+                break;
+            case "ThisRef":
+                v = visitThisRef((ThisRef) o, locals, params);
+                break;
+            case "ParameterRef":
+                v = visitParameterRef((ParameterRef) o, locals, params);
+                break;
+            default:
+                mustEqual(subName, "BUT NOT");
+        }
+
 
         return v;
     }
@@ -203,15 +239,15 @@ public class VM {
     }
 
     public ValueProperty visitJCastExpr(JCastExpr expr, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
-            ValueProperty ovalue = dispatch(expr.getOp(), locals, params);
+        ValueProperty ovalue = dispatch(expr.getOp(), locals, params);
 
-            ValueProperty property = new ValueProperty();
-            property.trueType = expr.getType();
-            property.fields = ovalue.fields;
-            property.value = ovalue.value;
-            property.hasTaint = ovalue.hasTaint;
+        ValueProperty property = new ValueProperty();
+        property.trueType = expr.getType();
+        property.fields = ovalue.fields;
+        property.value = ovalue.value;
+        property.hasTaint = ovalue.hasTaint;
 
-            return property;
+        return property;
     }
 
     public ValueProperty visitJimpleLocal(JimpleLocal local, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
@@ -254,7 +290,7 @@ public class VM {
 
     public ValueProperty visitJNegExpr(JNegExpr expr, Map<JimpleLocal, ValueProperty> locals, List<ValueProperty> params) {
         ValueProperty property = new ValueProperty();
-        property.value = - (int) dispatch(expr.getOp(), locals, params).value;
+        property.value = -(int) dispatch(expr.getOp(), locals, params).value;
         property.trueType = IntType.v();
 
         return property;
@@ -434,7 +470,7 @@ public class VM {
 
         SootMethod method = null;
         if (expr instanceof JVirtualInvokeExpr || expr instanceof JInterfaceInvokeExpr)
-            method = firstMatchMethod(((RefType)thisValue.trueType).getSootClass(), sign);
+            method = firstMatchMethod(((RefType) thisValue.trueType).getSootClass(), sign);
         else
             method = expr.getMethod();
 
@@ -486,7 +522,7 @@ public class VM {
 
         if (stmt.getLeftOp() instanceof JimpleLocal) {
             locals.put((JimpleLocal) stmt.getLeftOp(), rvalue);
-        } else if (stmt.getLeftOp() instanceof JInstanceFieldRef){
+        } else if (stmt.getLeftOp() instanceof JInstanceFieldRef) {
             JInstanceFieldRef instanceFieldRef = (JInstanceFieldRef) stmt.getLeftOp();
             SootFieldRef fieldRef = instanceFieldRef.getFieldRef();
 
@@ -498,7 +534,7 @@ public class VM {
 
             thisValue.fields.put(fieldRef.name(), rvalue);
         } else if (stmt.getLeftOp() instanceof StaticFieldRef) {
-            SootFieldRef fieldRef = ((StaticFieldRef)stmt.getLeftOp()).getFieldRef();
+            SootFieldRef fieldRef = ((StaticFieldRef) stmt.getLeftOp()).getFieldRef();
             String key = getStaticFieldKey(fieldRef);
 
             mustEqual(fieldRef.isStatic(), true);
@@ -535,8 +571,6 @@ public class VM {
             ValueProperty value = new ValueProperty();
             value.trueType = method.getReturnType();
 
-            //if (value.trueType)
-
             // 这里需要更精细的操作，以保证后续有值
 
             return value;
@@ -565,7 +599,6 @@ public class VM {
         loadClass(method.getDeclaringClass());
 
 
-
         Body body = method.retrieveActiveBody();
         Map<JimpleLocal, ValueProperty> locals = new HashMap<JimpleLocal, ValueProperty>();
         ValueProperty retval = null;
@@ -584,10 +617,8 @@ public class VM {
         if (DEBUG) {
             System.out.println(staticFields.get("pp").value + method.getDeclaringClass().getName());
             System.out.println(staticFields.get("pp").value + method.getName());
-            //System.out.println(body.toString());
             System.out.flush();
         }
-
 
 
         UnitGraph graph = new ExceptionalUnitGraph(body);
@@ -600,7 +631,7 @@ public class VM {
                 System.out.println(staticFields.get("pp").value + "  " + u.toString());
                 staticFields.get("pp").value = "|  " + (String) staticFields.get("pp").value;
                 o = dispatch(u, locals, params);
-                staticFields.get("pp").value = ((String)staticFields.get("pp").value).substring(3);
+                staticFields.get("pp").value = ((String) staticFields.get("pp").value).substring(3);
             } else {
                 o = dispatch(u, locals, params);
             }
