@@ -221,7 +221,7 @@ public class VM {
                 v = visitParameterRef((ParameterRef) o, locals, params);
                 break;
             default:
-                mustEqual(subName, "BUT NOT");
+                mustEqual(subName, "Switch NOT FOUND");
         }
 
 
@@ -560,6 +560,7 @@ public class VM {
 
     public ValueProperty visitMethod(SootMethod method, ValueProperty thisValue, List<ValueProperty> params) {
 
+        /*
         // 排除掉异常类的调用
         try {
             Class<?> curClass = Class.forName(method.getDeclaringClass().getName());
@@ -568,6 +569,7 @@ public class VM {
             }
         } catch (Exception e) {
         }
+        */
 
 
         if (method.isNative()) {
